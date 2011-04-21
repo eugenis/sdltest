@@ -44,7 +44,7 @@ void DrawScreen(SDL_Surface* screen, int h)
 }
 
 
-int sdltest_main(int argc, char* argv[])
+int sdl_main(int argc, char* argv[])
 {
     SDL_Surface *screen;
     SDL_Event event;
