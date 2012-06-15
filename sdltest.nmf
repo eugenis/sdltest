@@ -1,0 +1,6 @@
+{
+  "program": {
+    "x86-64": {"url": "sdltest"},
+    "x86-32": {"url": "sdltest"}
+  }
+}
