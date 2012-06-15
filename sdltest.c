@@ -1,4 +1,4 @@
-// Found at http://friedspace.com/SDLTest.c
+/* Found at http://friedspace.com/SDLTest.c */
 
 #include <stdio.h>
 #include <SDL.h>
