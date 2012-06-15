@@ -13,79 +13,92 @@
 
 #include <SDL_video.h>
 extern "C" {
-extern int sdl_main(int argc, const char *argv[]);
+	extern int sdl_main(int argc, const char *argv[]);
 }
 #include <SDL.h>
 #include <SDL_nacl.h>
 
 class PluginInstance : public pp::Instance {
- public:
-  explicit PluginInstance(PP_Instance instance) : pp::Instance(instance),
-						  sdl_main_thread_(0),
-						  width_(0),
-						  height_(0) {}
-  ~PluginInstance() {
-    if (sdl_main_thread_) {
-      pthread_join(sdl_main_thread_, NULL);
-    }
-  }
+public:
+	explicit PluginInstance(PP_Instance instance) : pp::Instance(instance),
+	                                                sdl_main_thread_(0),
+	                                                width_(0),
+	                                                height_(0)
+	{}
 
-  virtual void DidChangeView(const pp::Rect& position, const pp::Rect& clip) {
-    printf("did change view, new %dx%d, old %dx%d\n",
-	   position.size().width(), position.size().height(),
-	   width_, height_);
+	~PluginInstance()
+	{
+		if (sdl_main_thread_)
+		{
+			pthread_join(sdl_main_thread_, NULL);
+		}
+	}
 
-    if (position.size().width() == width_ &&
-	position.size().height() == height_)
-      return;  // Size didn't change, no need to update anything.
+	virtual void DidChangeView(const pp::Rect& position, const pp::Rect& clip)
+	{
+		printf("did change view, new %dx%d, old %dx%d\n",
+		                position.size().width(), position.size().height(),
+		                width_, height_);
 
-    if (sdl_thread_started_ == false) {
-      width_ = position.size().width();
-      height_ = position.size().height();
+		if (position.size().width() == width_
+		    && position.size().height() == height_)
+			return;  // Size didn't change, no need to update anything.
 
-      SDL_NACL_SetInstance(pp_instance(), width_, height_);
-      // It seems this call to SDL_Init is required. Calling from
-      // sdl_main() isn't good enough.
-      // Perhaps it must be called from the main thread?
-      int lval = SDL_Init(SDL_INIT_VIDEO);
-      assert(lval >= 0);
-      if (0 == pthread_create(&sdl_main_thread_, NULL, sdl_thread, this)) {
-	sdl_thread_started_ = true;
-      }
-    }
-  }
+		if (sdl_thread_started_ == false)
+		{
+			width_ = position.size().width();
+			height_ = position.size().height();
 
-  bool HandleInputEvent(const pp::InputEvent& event) {
-	SDL_NACL_PushEvent(event);
-    return true;
-  }
+			SDL_NACL_SetInstance(pp_instance(), width_, height_);
 
-  bool Init(int argc, const char* argn[], const char* argv[]) {
-    return true;
-  }
+			// It seems this call to SDL_Init is required. Calling from
+			// sdl_main() isn't good enough.
+			// Perhaps it must be called from the main thread?
+			int lval = SDL_Init(SDL_INIT_VIDEO);
+			assert(lval >= 0);
+			if (0 == pthread_create(&sdl_main_thread_, NULL, sdl_thread, this)) {
+				sdl_thread_started_ = true;
+			}
+		}
+	}
 
- private:
-  bool sdl_thread_started_;
-  pthread_t sdl_main_thread_;
-  int width_;
-  int height_;
+	bool HandleInputEvent(const pp::InputEvent& event)
+	{
+		SDL_NACL_PushEvent(event);
+		return true;
+	}
 
-  static void* sdl_thread(void* param) {
-    sdl_main(0, NULL);
-    return NULL;
-  }
+	bool Init(int argc, const char* argn[], const char* argv[])
+	{
+		return true;
+	}
+
+private:
+	bool sdl_thread_started_;
+	pthread_t sdl_main_thread_;
+	int width_;
+	int height_;
+
+	static void* sdl_thread(void* param)
+	{
+		sdl_main(0, NULL);
+		return NULL;
+	}
 };
 
-class PepperModule : public pp::Module {
- public:
-  // Create and return a PluginInstanceInstance object.
-  virtual pp::Instance* CreateInstance(PP_Instance instance) {
-    return new PluginInstance(instance);
-  }
+class PepperModule : public pp::Module
+{
+public:
+	virtual pp::Instance* CreateInstance(PP_Instance instance)
+	{
+		return new PluginInstance(instance);
+	}
 };
 
-namespace pp {
-  Module* CreateModule() {
-    return new PepperModule();
-  }
-}  // namespace pp
+namespace pp
+{
+	Module* CreateModule()
+	{
+		return new PepperModule();
+	}
+}
